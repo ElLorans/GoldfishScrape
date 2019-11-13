@@ -1,5 +1,5 @@
 # GoldfishScrape
-Download MtgGoldfish Decklist as json file
+Download MtgGoldfish Decklists as json file
 
 Run the file. Insert the format you want to scrape (e.g.: Modern). The screen will show all the urls being scraped.
 The script will ask if you want to save the output. If "yes" is inserted, you will get 2 files: modern_m.json including
