@@ -10,7 +10,6 @@ def grab_links(goldfish_html: str, clean=True) -> dict:
     """
     Return ORDERED dict of links to scrape; if param clean is True, decks named only after colours combinations are
         not included.
-
     :param goldfish_html: html page of goldfish metagame page for a specific format (can be full or partial page)
                           e.g.: https://www.mtggoldfish.com/metagame/modern/full#paper
     :param clean: True or anything else: if clean != True, decks names only according to colour combination are not
@@ -23,7 +22,6 @@ def grab_links(goldfish_html: str, clean=True) -> dict:
     soup = BeautifulSoup(non_budget, "lxml")
 
     names = soup.find_all("span", {"class": "title"})
-
     result = dict()
 
     permutations = ['W', 'U', 'B', 'R', 'G', 'WU', 'WB', 'WR', 'WG', 'UW', 'UB', 'UR', 'UG', 'BW', 'BU', 'BR', 'BG',
@@ -77,7 +75,6 @@ def scrape_deck_page(html_deck: str) -> (str, dict, dict):
     :return: tuple (deck_name: str, mainboard: dict, sideboard: dict)
     """
     splitted = html_deck.split("Sideboard")
-
     mainboard = splitted[0]
     try:
         sideboard = splitted[1].split("Cards Total")[0]
@@ -88,13 +85,14 @@ def scrape_deck_page(html_deck: str) -> (str, dict, dict):
     deck_name = main_soup.find("h1", {"class": "deck-view-title"}
                                ).text.strip().replace("\n\nSuggest\xa0a\xa0Better"
                                                       "\xa0Name", "")
-
     if "[" in deck_name:
         deck_name = deck_name[:deck_name.find("[") - 1]
 
     if "<" in deck_name:
         deck_name = deck_name[:deck_name.find("<") - 1]
 
+    deck_name = deck_name.replace("/", "").replace("-", " ")
+    
     if sideboard is None:
         return deck_name, scrape_cards(main_soup), {"None": 0}
 
@@ -140,49 +138,48 @@ def main(formato, full=False):
     url = url_start + formato + url_end
     print(f"Getting links from {url}")
     page = requests.get(url)
-
     links = grab_links(page.text).values()
-    print("Links grabbed!!\n")
+
+    print(f"{len(links)} links grabbed!!\n")
 
     for link in links:
         print(f"Getting data from:\n{link}")
-        try:
+        try:     
             page = requests.get(link).text
             name, mainb, side = scrape_deck_page(page)
             if name in mainboards:
-                print(f"{name} is a CONFLICTING NAME and will not be saved. CHECK THIS BEHAVIOUR")
+                print(f"{name} is a CONFLICTING NAME and will not be saved.")
             else:
                 mainboards[name] = mainb
                 sideboards[name] = side
         except TimeoutError:
             print("The connection FAILED due to a TimeOut Error.")
+        except Exception as e:
+            print(e, "\n", link, "will not be scraped")
     return mainboards, sideboards
 
 
 if __name__ == "__main__":
-    target = input("Insert format to scrape").lower()
-    fullness = input("Do you want to download all decks (Suggested for Modern and Legacy)?(y/n)\nWATCH OUT: decks with "
-                     "names such as WR and WRBG will not be scraped").lower()
-    if fullness[0] == "y":
-        fullness = True
-    else:
-        fullness = False
-    m, s = main(target, fullness)  # main returns 2 variables
-    confirmation = input("Save results?(y/n)").lower()
-    if confirmation[0] == "y":
+    while True:
+        target = input("Insert format to scrape").lower()
+        fullness = input("Do you want to download all decks (Suggested for Modern and Legacy)?(y/n)\nWATCH OUT: decks with "
+                         "names such as WR and WRBG will not be scraped").lower()
+        if fullness[0] == "y":
+            fullness = True
+        else:
+            fullness = False
+        m, s = main(target, fullness)  # main returns 2 variables
+
+        # confirmation = input("Save results?(y/n)").lower()
+        # if confirmation[0] == "y":
 
         capital_target = target.capitalize()
-        result = capital_target + " = " + str(m) + "\n\n" + capital_target + "_Sideboards = " + str(s) + "\n"
+
+        try:
+            result = f"{capital_target} = {m} \n{'#' * 80} \n#{capital_target}_Sideboards \n{capital_target}_Sideboards = {s} \n "
+        except:
+            breakpoint()
         with open(target + ".py", "w") as f:
             f.write(result)
-
-        # import json
-        #
-        # main_file = target + "_m.json"
-        # side_file = target + "_s.json"
-        #
-        # with open(main_file, "w") as j:
-        #     json.dump(m, j)
-        # with open(side_file, "w") as f:
-        #     json.dump(s, f)
-        # print("Output saved to", main_file, "and", side_file)
+        print("Data saved on", target + ".py")
+        print("\n\n")
