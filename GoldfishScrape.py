@@ -12,7 +12,7 @@ def grab_links(goldfish_html: str, clean=True) -> dict:
         not included.
     :param goldfish_html: html page of goldfish metagame page for a specific format (can be full or partial page)
                           e.g.: https://www.mtggoldfish.com/metagame/modern/full#paper
-    :param clean: True or anything else: if clean != True, decks names only according to colour combination are not
+    :param clean: True or anything else: if clean is not True, decks names like R, UW, etc. are not
                   scraped
     :return: dictionary of deck_names with their links {deck_name: deck_relative_link, ...}
     """
@@ -22,7 +22,7 @@ def grab_links(goldfish_html: str, clean=True) -> dict:
     soup = BeautifulSoup(non_budget, "lxml")
 
     names = soup.find_all("span", {"class": "title"})
-    result = dict()
+    name_links = dict()
 
     permutations = ['W', 'U', 'B', 'R', 'G', 'WU', 'WB', 'WR', 'WG', 'UW', 'UB', 'UR', 'UG', 'BW', 'BU', 'BR', 'BG',
                     'RW', 'RU', 'RB', 'RG', 'GW', 'GU', 'GB', 'GR', 'WUB', 'WUR', 'WUG', 'WBU', 'WBR', 'WBG', 'WRU',
@@ -57,14 +57,13 @@ def grab_links(goldfish_html: str, clean=True) -> dict:
 
         # if deck name already present do NOT insert it in result dict
         if clean is True:
-
-            if name not in result and name not in permutations:  # exclude decks with bad names
-                result[name] = "https://www.mtggoldfish.com" + elem.a["href"] + "#paper"
+            if name not in name_links and name not in permutations:  # exclude decks with bad names
+                name_links[name] = "https://www.mtggoldfish.com" + elem.a["href"] + "#paper"
 
         elif clean is not True:
-            if name not in result:
-                result[name] = "https://www.mtggoldfish.com" + elem.a["href"] + "#paper"
-    return result
+            if name not in name_links:
+                name_links[name] = "https://www.mtggoldfish.com" + elem.a["href"] + "#paper"
+    return name_links
 
 
 def scrape_deck_page(html_deck: str) -> (str, dict, dict):
@@ -84,7 +83,7 @@ def scrape_deck_page(html_deck: str) -> (str, dict, dict):
     main_soup = BeautifulSoup(mainboard, "lxml")
     deck_name = main_soup.find("h1", {"class": "deck-view-title"}
                                ).text.strip().replace("\n\nSuggest\xa0a\xa0Better"
-                                                      "\xa0Name", "")
+                                                      "\xa0Name", "").replace("\nFix Archetype", "")
     if "[" in deck_name:
         deck_name = deck_name[:deck_name.find("[") - 1]
 
@@ -92,12 +91,11 @@ def scrape_deck_page(html_deck: str) -> (str, dict, dict):
         deck_name = deck_name[:deck_name.find("<") - 1]
 
     deck_name = deck_name.replace("/", "").replace("-", " ")
-    
+
     if sideboard is None:
-        return deck_name, scrape_cards(main_soup), {"None": 0}
+        return deck_name, scrape_cards(main_soup), {}
 
     side_soup = BeautifulSoup(sideboard, "lxml")
-
     return deck_name, scrape_cards(main_soup), scrape_cards(side_soup)
 
 
@@ -144,7 +142,7 @@ def main(formato, full=False):
 
     for link in links:
         print(f"Getting data from:\n{link}")
-        try:     
+        try:
             page = requests.get(link).text
             name, mainb, side = scrape_deck_page(page)
             if name in mainboards:
@@ -160,26 +158,21 @@ def main(formato, full=False):
 
 
 if __name__ == "__main__":
-    while True:
-        target = input("Insert format to scrape").lower()
-        fullness = input("Do you want to download all decks (Suggested for Modern and Legacy)?(y/n)\nWATCH OUT: decks with "
-                         "names such as WR and WRBG will not be scraped").lower()
-        if fullness[0] == "y":
-            fullness = True
-        else:
-            fullness = False
-        m, s = main(target, fullness)  # main returns 2 variables
+    fullness = True
+    formats = "Standard | Modern | Pioneer | Pauper | Legacy | Vintage | Commander_1v1 | Commander | Brawl | Historic".split(
+       " | ")
+    print("WATCH OUT: decks with names such as WR and WRBG will not be scraped")
+    result = ""
+    for formato in formats:
+        print("Switching to", formato)
+        m, s = main(formato.lower(), fullness)  # main returns 2 variables
+        result += f"{formato} = {m} \n{'#' * 80} \n#{formato}_Sideboards \n{formato}_Sideboards = {s} \n "
+        result += f"\n{'#' * 80}\n"
 
-        # confirmation = input("Save results?(y/n)").lower()
-        # if confirmation[0] == "y":
-
-        capital_target = target.capitalize()
-
-        try:
-            result = f"{capital_target} = {m} \n{'#' * 80} \n#{capital_target}_Sideboards \n{capital_target}_Sideboards = {s} \n "
-        except:
-            breakpoint()
-        with open(target + ".py", "w") as f:
-            f.write(result)
-        print("Data saved on", target + ".py")
-        print("\n\n")
+    # Lurrus of the Dream-Den and Lim-Dûl are misspelled on Goldfish
+    # Change Godzilla names
+    result = result.replace("Dream Den", "Dream-Den").replace("Lim-Dul", "Lim-Dûl").replace("Dorat, the Perfect Pet", "Sprite Dragon").replace("Mothra, Supersonic Queen", "Luminous Broodmoth")
+    
+    with open("commander.py", "w") as f:
+        f.write(result)
+    print("Data saved on new_data.py")
