@@ -30,7 +30,7 @@ def scrape_deck_list(html_deck):
         sideboard = None
         
     main_soup = BeautifulSoup(mainboard, "lxml")
-    deck_name = main_soup.find("h2").text.strip().replace("\n\nSuggest\xa0a\xa0Better"
+    deck_name = main_soup.find("title").text.strip().replace("\n\nSuggest\xa0a\xa0Better"
                                                      "\xa0Name", "")
     if sideboard is None:
         return deck_name, scrape_cards(main_soup), {"None": 0}
