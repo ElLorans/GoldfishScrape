@@ -17,4 +17,4 @@ to:
 links = grab_links(page.text, clean=False).values()
 
 ---------------------------------------------------------------------------------------------------------------------------------
-goldfishscrape.py contains many useful functions in order to scrape single pages, formats and deck on GoldFish. Import the functions from another .py file for scraping.
+goldfishscrape.py contains many useful functions in order to scrape single pages, formats and decks on GoldFish. Import the functions from another .py file for scraping.
