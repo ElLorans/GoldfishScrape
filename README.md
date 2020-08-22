@@ -1,7 +1,9 @@
 # GoldfishScrape
-Download MtgGoldfish Decklists as python dictionaries.
+The dataset is used on https://bestdeckforyou.pythonanywhere.com/.
+
+Execute 'main.py' to download MtgGoldfish, AetherHub and MtgaZone Decklists as python dictionaries.
 All formats in "Standard | Modern | Pioneer | Pauper | Legacy | Vintage | Commander_1v1 | Commander | Brawl | Historic" are scraped.
-Run goldfishscrape.py and the output will be saved on "new_data.py" in the folloqing format:
+Run 'main.py' and the output will be saved on 'new_data.py' in the folloqing format:
 
 Standard = {"Deck 1": {"Card 1": 4, ...}, ...}
 Standard_Sideboards = {"Deck 1": {"Card 1": 2, ...}, ...}
@@ -9,7 +11,7 @@ Standard_Sideboards = {"Deck 1": {"Card 1": 2, ...}, ...}
 
 ---------------------------------------------------------------------------------------------------------------------------------
 By default, the program does not scrape decks named "WRGB" or similarly. This behaviour can be changed by modifying the
-line 144 from:
+code from:
 
 links = grab_links(page.text).values() 
 to:
@@ -17,4 +19,4 @@ to:
 links = grab_links(page.text, clean=False).values()
 
 ---------------------------------------------------------------------------------------------------------------------------------
-goldfishscrape.py contains many useful functions in order to scrape single pages, formats and decks on GoldFish. Import the functions from another .py file for scraping.
+MtgScraper contains 3 files with many useful functions in order to scrape single pages, formats and decks from GoldFish, AetherHub and MtgaZone. Import the functions from another .py file for scraping.
