@@ -6,7 +6,9 @@ All formats in "Standard | Modern | Pioneer | Pauper | Legacy | Vintage | Comman
 Run 'main.py' and the output will be saved on 'new_data.py' in the folloqing format:
 
 Standard = {"Deck 1": {"Card 1": 4, ...}, ...} <br>
-Standard_Sideboards = {"Deck 1": {"Card 1": 2, ...}, ...}
+Standard_Sideboards = {"Deck 1": {"Card 1": 2, ...}, ...} <br>
+<br>
+Modern = ...<br>
 ...
 
 ---------------------------------------------------------------------------------------------------------------------------------
