@@ -6,7 +6,8 @@ All formats in
 <br>
 "Standard | Modern | Pioneer | Pauper | Legacy | Vintage | Commander_1v1 | Commander | Brawl | Historic"
 <br> are scraped.
-Run 'main.py' and the output will be saved on 'new_data.py' in the folloqing format:
+<br>
+Run 'main.py' and the output will be saved on 'new_data.py' in the following format:
 
 Standard = {"Deck 1": {"Card 1": 4, ...}, ...} <br>
 Standard_Sideboards = {"Deck 1": {"Card 1": 2, ...}, ...} <br>
@@ -16,9 +17,11 @@ Modern = ...<br>
 
 ---------------------------------------------------------------------------------------------------------------------------------
 By default, the program does not scrape decks named "WRGB" or similarly. This behaviour can be changed by modifying the
-code from:
+code from: 
+<br>
 
-links = grab_links(page.text).values() 
+links = grab_links(page.text).values()
+<br>
 to:
 
 links = grab_links(page.text, clean=False).values()
