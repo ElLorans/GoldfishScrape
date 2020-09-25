@@ -12,7 +12,7 @@ def grab_links(mtgazone_html: str) -> dict:
     :return: dictionary {deck_name: deck_relative_link, ...} of relative format (either standard or historic)
     """
     soup = BeautifulSoup(mtgazone_html, 'lxml')
-    table = soup.find('table')  # first table is empty
+    table = soup.find('table')
     records = list()
     for tr in table.find_all("tr"):
         # ths = tr.find_all("th")
@@ -27,11 +27,17 @@ def grab_links(mtgazone_html: str) -> dict:
             record.append(each.text)
         records.append(record)
 
-    # Fourth elements are names, fifths are links.
+    # get link position as it changes btw standard and historic
+    for i, stringa in enumerate(records[1]):   # first is empty
+        if 'https' in stringa:
+            link_index = i
+            break
+
+    # Third or Fourth elem is name, Fourt or Fifth is links.
     links = dict()
-    for deck_info in records[1:]:
-        deck_name = deck_info[3]
-        deck_link = deck_info[5]
+    for deck_info in records[1:]:                   # first is empty
+        deck_name = deck_info[link_index - 2]
+        deck_link = deck_info[link_index]
         links[deck_name] = deck_link
     return links
 
@@ -60,6 +66,6 @@ def get_mtgazone_deck(mtgazone_deck_html) -> tuple:
 if __name__ == "__main__":
     import requests
 
-    response = requests.get(standard_url).text
+    response = requests.get(historic_url).text
     mtgazone_standard_links = grab_links(response)
     print(mtgazone_standard_links)
