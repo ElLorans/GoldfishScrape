@@ -77,7 +77,8 @@ if __name__ == "__main__":
                     'Gigan, Cyberclaw Terror': 'Gyruda, Doom of Depths',
                     'Babygodzilla, Ruin Reborn': 'Pollywog Symbiote', 'Anguirus, Armored Killer': 'Gemrazer',
                     'Bio-Quartz Spacegodzilla': 'Brokkos, Apex of Forever',
-                    ' <292 C>': '', ' [RNA]': '', ' [mps]': '', '\n\nReport Deck Name': '', ' [GRN]': '',          # Goldfish mistakes
+                    # correct Goldfish mistakes
+                    ' <292 C>': '', ' [RNA]': '', ' [mps]': '', '\n\nReport Deck Name': '', ' [GRN]': '',
                     '\n\nReport Deck Name': ''
                     }
 

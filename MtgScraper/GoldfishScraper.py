@@ -1,9 +1,23 @@
 """
-Download all Goldfish decks in a dictionary of dict(int).
+Download all Goldfish decks in a dictionary.
 """
-
-import requests
 from bs4 import BeautifulSoup
+import requests
+
+
+def deck_text_to_dict(stringa: str) -> dict:
+    """
+    Convert plain text to dictionary. Text must be separated by \n and number of copies must be separated by ' ' from
+    card names.
+    :param stringa: '1 Card\n3 OtherCard\n...'
+    :return: {'Card': 1, 'OtherCard': 3...}
+    """
+    decklist = dict()
+    for el in stringa.split('\n'):
+        if len(el.strip()) > 0:
+            copies, card = el.split(' ', 1)
+            decklist[card.strip()] = int(copies)
+    return decklist
 
 
 def grab_links(goldfish_html: str, clean=True) -> dict:
@@ -21,10 +35,9 @@ def grab_links(goldfish_html: str, clean=True) -> dict:
     non_budget = goldfish_html.split("View More")[0]
     soup = BeautifulSoup(non_budget, "lxml")
 
-    names = soup.find_all("span", {"class": "title"})
+    names = soup.find_all('span', {'class': 'deck-price-paper'})[1:]
     name_links = dict()
-
-    permutations = ['W', 'U', 'B', 'R', 'G', 'WU', 'WB', 'WR', 'WG', 'UW', 'UB', 'UR', 'UG', 'BW', 'BU', 'BR', 'BG',
+    permutations = {'W', 'U', 'B', 'R', 'G', 'WU', 'WB', 'WR', 'WG', 'UW', 'UB', 'UR', 'UG', 'BW', 'BU', 'BR', 'BG',
                     'RW', 'RU', 'RB', 'RG', 'GW', 'GU', 'GB', 'GR', 'WUB', 'WUR', 'WUG', 'WBU', 'WBR', 'WBG', 'WRU',
                     'WRB', 'WRG', 'WGU', 'WGB', 'WGR', 'UWB', 'UWR', 'UWG', 'UBW', 'UBR', 'UBG', 'URW', 'URB', 'URG',
                     'UGW', 'UGB', 'UGR', 'BWU', 'BWR', 'BWG', 'BUW', 'BUR', 'BUG', 'BRW', 'BRU', 'BRG', 'BGW', 'BGU',
@@ -50,18 +63,18 @@ def grab_links(goldfish_html: str, clean=True) -> dict:
                     'RUBWG', 'RUBGW', 'RUGWB', 'RUGBW', 'RBWUG', 'RBWGU', 'RBUWG', 'RBUGW', 'RBGWU', 'RBGUW', 'RGWUB',
                     'RGWBU', 'RGUWB', 'RGUBW', 'RGBWU', 'RGBUW', 'GWUBR', 'GWURB', 'GWBUR', 'GWBRU', 'GWRUB', 'GWRBU',
                     'GUWBR', 'GUWRB', 'GUBWR', 'GUBRW', 'GURWB', 'GURBW', 'GBWUR', 'GBWRU', 'GBUWR', 'GBURW', 'GBRWU',
-                    'GBRUW', 'GRWUB', 'GRWBU', 'GRUWB', 'GRUBW', 'GRBWU', 'GRBUW']
+                    'GBRUW', 'GRWUB', 'GRWBU', 'GRUWB', 'GRUBW', 'GRBWU', 'GRBUW'}
 
     for elem in names:
-        name = elem.text.split("\n")[2]
+        name = elem.text.replace('\n', '')
 
         if name not in name_links and name != 'Other':
             # if deck name already present do NOT insert it in result dict
             if clean is True and name not in permutations:  # exclude decks with bad names
-                name_links[name] = "https://www.mtggoldfish.com" + elem.a["href"] + "#paper"
+                name_links[name] = "https://www.mtggoldfish.com" + elem.a["href"]
 
             elif clean is not True:
-                name_links[name] = "https://www.mtggoldfish.com" + elem.a["href"] + "#paper"
+                name_links[name] = "https://www.mtggoldfish.com" + elem.a["href"]
     return name_links
 
 
@@ -72,48 +85,38 @@ def scrape_deck_page(html_deck: str) -> (str, dict, dict):
     :param: html_deck: html page of deck e.g.: https://www.mtggoldfish.com/archetype/standard-jeskai-fires#paper
     :return: tuple (deck_name: str, mainboard: dict, sideboard: dict)
     """
-    splitted = html_deck.split("Sideboard")
-    mainboard = splitted[0]
-    try:
-        sideboard = splitted[1].split("Cards Total")[0]
-    except IndexError:  # if sideboard does not exist
-        sideboard = None
+    soup = BeautifulSoup(html_deck, "lxml")
 
-    main_soup = BeautifulSoup(mainboard, "lxml")
-    deck_name = main_soup.find("h1", {"class": "deck-view-title"}
-                               ).text.strip().replace("\n\nSuggest\xa0a\xa0Better"
-                                                      "\xa0Name", "").replace("\nFix Archetype", "")
+    # find author, then get parent node. Easiest way I could find to exclude author from deck name.
+    # Structure:
+    # <h1 class ="title">
+    #   Four - Color Omnath
+    #   <span class ="author"> by VTCLA </span>
+    # </h1>
+    deck_name = soup.find("span", {"class": "author"}).previousSibling.replace('\n', '').strip()
+    deck_name = deck_name.replace("/", "").replace("-", " ").replace("\n\nSuggest\xa0a\xa0Better\xa0Name", "").replace(
+        "\nFix Archetype", "")
+
     if "[" in deck_name:
         deck_name = deck_name[:deck_name.find("[") - 1]
 
     if "<" in deck_name:
         deck_name = deck_name[:deck_name.find("<") - 1]
 
-    deck_name = deck_name.replace("/", "").replace("-", " ")
-
-    if sideboard is None:
-        return deck_name, scrape_cards(main_soup), {}
-
-    side_soup = BeautifulSoup(sideboard, "lxml")
-    return deck_name, scrape_cards(main_soup), scrape_cards(side_soup)
+    main, side = scrape_cards(soup)
+    return deck_name, main, side
 
 
-def scrape_cards(soup) -> dict:
+def scrape_cards(html_soup: BeautifulSoup) -> tuple:
     """
     Scrape cards in deck list page.
-    :param soup: BeautifulSoup of html deck page OF ONLY EITHER mainboard or sideboard
-    :type soup: bs4.BeautifulSoup
-    :return: dictionary of deck cards {"Mox Opal": 4, ...}
+    :param html_soup: BeautifulSoup of html deck page OF both mainboard or sideboard
+    :return: tuple of dictionaries of deck cards ({"Mox Opal": 4, ...}, {"Galvanic Blast": 2, ...})
     """
-    cells = soup.find_all("td")
+    deck_plain_text = html_soup.find('input', {'id': "deck_input_deck"})['value']
+    main_text, side_text = deck_plain_text.split('sideboard')
 
-    cards = BeautifulSoup(str(cells), "lxml").find_all("td", {"class": "deck-col-card"})
-    quantities = BeautifulSoup(str(cells), "lxml").find_all("td", {"class": "deck-col-qty"})
-
-    deck_list = {}
-    for index, card in enumerate(cards):
-        deck_list[card.text.strip()] = int(quantities[index].text.strip())
-    return deck_list
+    return deck_text_to_dict(main_text), deck_text_to_dict(side_text)
 
 
 def main(formato, full=False):
@@ -156,3 +159,14 @@ def main(formato, full=False):
         except Exception as e:
             print(e, "\n", link, "will not be scraped")
     return mainboards, sideboards
+
+
+if __name__ == '__main__':
+    with open('html_files/goldfish.html') as f:
+        goldfish_html = f.read()
+    links = grab_links(goldfish_html)
+
+    page_html = requests.get(list(links.values())[0]).text
+    decklist = scrape_deck_page(page_html)
+    print(decklist)
+    import pdb; pdb.set_trace()
