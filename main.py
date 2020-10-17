@@ -10,9 +10,12 @@ if __name__ == "__main__":
 
     response = requests.get(MtgaZoneScraper.historic_url).text
     mtgazone_historic_links = MtgaZoneScraper.grab_links(response)
+
+    response = requests.get(MtgaZoneScraper.historic_brawl_url).text
+    mtgazone_historic_brawl_links = MtgaZoneScraper.grab_links(response)
     
     fullness = True
-    formats = ['Standard', 'Modern', 'Pioneer', 'Pauper', 'Legacy', 'Vintage', 'Commander_1v1', 'Commander']
+    formats = ('Standard', 'Modern', 'Pioneer', 'Pauper', 'Legacy', 'Vintage', 'Commander_1v1', 'Commander')
     print("WATCH OUT: decks with names such as WR and WRBG will not be scraped")
     result = ""
     for formato in formats:
@@ -25,7 +28,7 @@ if __name__ == "__main__":
                 if name not in m:
                     print(f"Adding {name} from MtgaZone at:\n{link}")
                     r = requests.get(link).text
-                    
+
                     # r might be landing page of deck archetype (with many similar decks) or real deck
                     try:
                         # get first deck from list of decks inside archetype
@@ -34,7 +37,7 @@ if __name__ == "__main__":
                         r = requests.get(real_link).text
                     except TypeError:                       # link was already single deck
                         pass
-                        
+
                     mtga_m, mtga_s = MtgaZoneScraper.get_mtgazone_deck(r)
                     if mtga_m is not None:
                         m[name] = mtga_m
@@ -45,29 +48,29 @@ if __name__ == "__main__":
         result += f"{formato} = {m} \n{'#' * 80} \n#{formato}_Sideboards \n{formato}_Sideboards = {s} \n "
         result += f"\n{'#' * 80}\n"
 
-    print("Switching to Historic from MtgaZone")
-    formato = "Historic"
-    m = dict()
-    s = dict()
-    for name, link in mtgazone_historic_links.items():
-        try:
-            r = requests.get(link).text
-            print(f"Adding {name} from MtgaZone")
+    for formato, links in {'Historic': mtgazone_historic_links,
+                           'Historic_Brawl': mtgazone_historic_brawl_links}.items():
+        print("Switching to", formato,  "from MtgaZone")
+        m = dict()
+        s = dict()
+        for name, link in links.items():
             try:
-                real_link = BeautifulSoup(r, 'lxml').find('a', {'class': "_self cvplbd"})['href']
-                print(f"Getting data from:\n{real_link}")
-                r = requests.get(real_link).text
-            except TypeError:  # link was already real link
-                pass
-            mtga_m, mtga_s = MtgaZoneScraper.get_mtgazone_deck(r)
-            m[name] = mtga_m
-            s[name] = mtga_s
-        except Exception as e:
-            print(e)
-            import pdb; pdb.set_trace()
-
-    result += f"{formato} = {m} \n{'#' * 80} \n#{formato}_Sideboards \n{formato}_Sideboards = {s} \n "
-    result += f"\n{'#' * 80}\n"
+                r = requests.get(link).text
+                print(f"Adding {name} from MtgaZone")
+                try:
+                    real_link = BeautifulSoup(r, 'lxml').find('a', {'class': "_self cvplbd"})['href']
+                    print(f"Getting data from:\n{real_link}")
+                    r = requests.get(real_link).text
+                except TypeError:  # link was already real link
+                    pass
+                mtga_m, mtga_s = MtgaZoneScraper.get_mtgazone_deck(r)
+                m[name] = mtga_m
+                s[name] = mtga_s
+            except Exception as e:
+                print(e)
+                import pdb; pdb.set_trace()
+        result += f"{formato} = {m} \n{'#' * 80} \n#{formato}_Sideboards \n{formato}_Sideboards = {s} \n "
+        result += f"\n{'#' * 80}\n"
 
     print("Switching to Brawl from Aetherhub")
     formato = "Brawl"
