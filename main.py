@@ -16,7 +16,7 @@ if __name__ == "__main__":
     print("WATCH OUT: decks with names such as WR and WRBG will not be scraped")
     result = ""
     for formato in formats:
-        print("\nSwitching to", formato)
+        print("\nSwitching to", formato, "\n")
         m, s = GoldfishScraper.main(formato.lower(), fullness)  # main returns 2 variables
 
         # update with MtgaZone decks
@@ -25,18 +25,22 @@ if __name__ == "__main__":
                 if name not in m:
                     print(f"Adding {name} from MtgaZone at:\n{link}")
                     r = requests.get(link).text
+                    
+                    # r might be landing page of deck archetype (with many similar decks) or real deck
                     try:
+                        # get first deck from list of decks inside archetype
                         real_link = BeautifulSoup(r, 'lxml').find('a', {'class': "_self cvplbd"})['href']
                         print(f"Getting data from:\n{real_link}")
                         r = requests.get(real_link).text
-                    except TypeError:  # link was already real link
+                    except TypeError:                       # link was already single deck
                         pass
+                        
                     mtga_m, mtga_s = MtgaZoneScraper.get_mtgazone_deck(r)
                     if mtga_m is not None:
                         m[name] = mtga_m
                         s[name] = mtga_s
                     else:
-                        print('No deck found at', link)
+                        print('\nNO DECK FOUND AT', link, '\n')
 
         result += f"{formato} = {m} \n{'#' * 80} \n#{formato}_Sideboards \n{formato}_Sideboards = {s} \n "
         result += f"\n{'#' * 80}\n"
@@ -71,20 +75,30 @@ if __name__ == "__main__":
     result += f"{formato} = {m} \n{'#' * 80} \n"
     result += f"\n{'#' * 80}\n"
 
-    replacements = {"Dream Den": "Dream-Den", "Lim-Dul": "Lim-Dûl",  # Dream-Den and Lim-Dûl are misspelled on Goldfish
+    replacements = {
+                    # Dream-Den and Lim-Dûl are misspelled on Goldfish
+                    "Dream Den": "Dream-Den", "Lim-Dul": "Lim-Dûl",
+                    
                     # Change Godzilla names
                     "Dorat, the Perfect Pet": "Sprite Dragon", "Mothra, Supersonic Queen": "Luminous Broodmoth",
                     'Gigan, Cyberclaw Terror': 'Gyruda, Doom of Depths',
                     'Babygodzilla, Ruin Reborn': 'Pollywog Symbiote', 'Anguirus, Armored Killer': 'Gemrazer',
                     'Bio-Quartz Spacegodzilla': 'Brokkos, Apex of Forever',
+                    
                     # correct Goldfish mistakes
-                    ' <292 C>': '', ' [RNA]': '', ' [mps]': '', '\n\nReport Deck Name': '', ' [GRN]': '',
-                    '\n\nReport Deck Name': ''
+                    ' <292 C>': '', ' [RNA]': '', ' [mps]': '', '\n\nReport Deck Name': '', ' [GRN]': ''
                     }
 
     for k, v in replacements.items():
         result = result.replace(k, v)
 
-    with open("new_data.py", "w", encoding='windows-1252') as f:
-        f.write(result)
-    print("Data saved on new_data.py")
+    try:
+        with open("new_data.py", "w", encoding='windows-1252') as f:
+            f.write(result)
+        print("Data saved on new_data.py")
+    except UnicodeEncodeError as e:
+        print(e)
+        print("\nSWITCHING TO UTF-8")
+        with open("new_data.py", "w", encoding='utf-8') as f:
+            f.write(result)
+        print("Data saved on new_data.py")
