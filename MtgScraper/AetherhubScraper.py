@@ -29,7 +29,7 @@ def main():
         for el in deck_list:
             if '(' not in el:
                 copies, card = el.split(' ', 1)
-                deck[card.strip()] = int(copies)
+                deck[card.split('[')[0].split('<')[0].strip()] = int(copies)
         deck_lists[name] = deck
         
     return deck_lists

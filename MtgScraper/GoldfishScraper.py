@@ -16,7 +16,7 @@ def deck_text_to_dict(stringa: str) -> dict:
     for el in stringa.split('\n'):
         if len(el.strip()) > 0:
             copies, card = el.split(' ', 1)
-            decklist[card.strip()] = int(copies)
+            decklist[card.split('[')[0].split('<')[0].strip()] = int(copies)
     return decklist
 
 

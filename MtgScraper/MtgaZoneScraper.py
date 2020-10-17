@@ -48,7 +48,7 @@ def get_main_or_side(main_or_side_soup):
         copies = int(el.find('div', {'class': "card-qty"}).text)
         name = el.find('div', {'class': "card-name"}).text
         name = name.replace('/', ' // ')
-        deck[name] = copies
+        deck[name.split('[')[0].split('<')[0].strip()] = copies
     return deck
 
 
