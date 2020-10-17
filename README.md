@@ -1,12 +1,13 @@
 # GoldfishScrape
-The dataset is used on https://bestdeckforyou.pythonanywhere.com/ (source code at https://github.com/ElLorans/Best-MTG-Deck) to allow users to understand how much they must spend to build each and every MTG tier deck given the cards already in their collection.
-
 Execute 'main.py' to download MtgGoldfish, AetherHub and MtgaZone Decklists as python dictionaries.
 All formats in 
 <br>
 "Standard | Modern | Pioneer | Pauper | Legacy | Vintage | Commander_1v1 | Commander | Brawl | Historic"
-<br> are scraped.
+<br> and Historic Brawl are scraped.
 <br>
+
+The dataset is used on https://bestdeckforyou.pythonanywhere.com/ (source code at https://github.com/ElLorans/Best-MTG-Deck) to allow users to understand how much they must spend to build each and every MTG tier deck given the cards already in their collection.
+
 Run 'main.py' and the output will be saved on 'new_data.py' in the following format:
 
 Standard = {"Deck 1": {"Card 1": 4, ...}, ...} <br>
