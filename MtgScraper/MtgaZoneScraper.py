@@ -6,6 +6,25 @@ historic_url = 'https://mtgazone.com/metagame/historic'
 historic_brawl_url = 'https://mtgazone.com/decks/historic-brawl/'
 
 
+def scrape_november_tiers_table(tabula):
+    """
+    Scrape Table after November UI change.
+    :return:
+    """
+    links = dict()
+    for tr in tabula.find_all("tr"):
+        # ths = tr.find_all("th")
+        trs = tr.find_all("td")
+        for cell in trs:
+            a = cell.find('a')
+            name = cell.text
+            if a is not None and len(name) > 0:
+                link = a['href']
+                link = link if link.startswith('https://mtgazone.com') else 'https://mtgazone.com' + link
+                links[name] = link
+    return links
+
+
 def grab_links(mtgazone_html: str) -> dict:
     """
     Return dict name: link (standard, historic) of ORDERED links to scrape.
@@ -37,12 +56,16 @@ def grab_links(mtgazone_html: str) -> dict:
 
         # Third or Fourth elem is name, Fourt or Fifth is links.
         links = dict()
-        for deck_info in records[1:]:                   # first is empty
-            deck_name = deck_info[link_index - 2]
-            deck_link = deck_info[link_index]
-            links[deck_name] = deck_link
-    
-    else: # for Historic Brawl
+        try:
+            for deck_info in records[1:]:                   # first is empty
+                deck_name = deck_info[link_index - 2]
+                deck_link = deck_info[link_index]
+                links[deck_name] = deck_link
+        except UnboundLocalError:   # Standard has a new UI with 2 tables for BO1 and BO3
+            for tab in soup.find_all('table'):
+                links.update(scrape_november_tiers_table(tab))
+
+    else:  # for Historic Brawl
         decks = soup.find_all('a', {"class": "_self cvplbd"})
         links = {deck.text.replace(':', '').split(' Historic Brawl Deck')[0]: deck['href'] for deck in decks}
     return links
@@ -71,7 +94,11 @@ def get_mtgazone_deck(mtgazone_deck_html) -> tuple:
 
 if __name__ == "__main__":
     import requests
+    # standard test
 
-    response = requests.get(historic_brawl_url).text
-    mtgazone_standard_links = grab_links(response)
-    print(mtgazone_standard_links)
+    formato_to_url = {'Standard': standard_url, 'Historic': historic_url, 'Historic Brawl': historic_brawl_url}
+    for formato, url in formato_to_url.items():
+        response = requests.get(url).text
+        mtgazone_links = grab_links(response)
+        print(mtgazone_links)
+        print('MtgaZoneScraper', formato, ': passed')
