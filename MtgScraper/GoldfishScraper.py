@@ -20,19 +20,18 @@ def deck_text_to_dict(stringa: str) -> dict:
     return decklist
 
 
-def grab_links(goldfish_html: str, clean=True) -> dict:
+def grab_links(gf_html: str, clean=True) -> dict:
     """
     Return ORDERED dict of links to scrape; if param clean is True, decks named only after colours combinations are
         not included.
-    :param goldfish_html: html page of goldfish metagame page for a specific format (can be full or partial page)
+    :param gf_html: html page of goldfish metagame page for a specific format (can be full or partial page)
                           e.g.: https://www.mtggoldfish.com/metagame/modern/full#paper
     :param clean: True or anything else: if clean is not True, decks names like R, UW, etc. are not
                   scraped
     :return: dictionary of deck_names with their links {deck_name: deck_relative_link, ...}
     """
-
     # split at View More to avoid Budget Decks if program is scraping only partial page
-    non_budget = goldfish_html.split("View More")[0]
+    non_budget = gf_html.split("View More")[0]
     soup = BeautifulSoup(non_budget, "lxml")
 
     names = soup.find_all('span', {'class': 'deck-price-paper'})[1:]
@@ -102,6 +101,8 @@ def scrape_deck_page(html_deck: str) -> (str, dict, dict):
 
     if "<" in deck_name:
         deck_name = deck_name[:deck_name.find("<") - 1]
+    if "{" in deck_name:
+        breakpoint()
 
     main, side = scrape_cards(soup)
     return deck_name, main, side
@@ -123,30 +124,30 @@ def main(formato, full=False):
     """
     Get dict of mains and dict of sides. 
     :formato: str (e.g.: "standard" or "modern")
-    :full: bool (True for scraping all decks from /full#paper and False for scraping only first decks from /#paper url)
+    :full: bool, True for scraping all decks from /full#paper,
+           False for scraping only first decks from /#paper url)
     :return:
     """
-
     url_start = "https://www.mtggoldfish.com/metagame/"
-    if full is True:
-        url_end = "/full#paper"
-    else:
-        url_end = "/#paper"
+    url_end = "/full#paper" if full is True else "/#paper"
+
     mainboards = dict()
     sideboards = dict()
 
     url = url_start + formato + url_end
     print(f"Getting links from {url}")
     page = requests.get(url)
-    links = grab_links(page.text).values()
+    links = grab_links(page.text)   #.values()
 
     print(f"{len(links)} links grabbed!!\n")
 
-    for link in links:
+    for link_name, link in links.items():
         print(f"Getting data from:\n{link}")
         try:
             page = requests.get(link).text
             name, mainb, side = scrape_deck_page(page)
+            # from Nov 2020, name from grab_links is more correct than scrape_deck_page
+            name = link_name
             if name in mainboards:
                 print(f"{name} is a CONFLICTING NAME and will not be saved.")
             elif len(mainb) == 0:
@@ -162,11 +163,11 @@ def main(formato, full=False):
 
 
 if __name__ == '__main__':
-    with open('html_files/goldfish.html') as f:
-        goldfish_html = f.read()
-    links = grab_links(goldfish_html)
+    url = "https://www.mtggoldfish.com/metagame/standard/full#paper"
+    page = requests.get(url)
+    links = grab_links(page.text)
 
+    import pdb; pdb.set_trace()
     page_html = requests.get(list(links.values())[0]).text
     decklist = scrape_deck_page(page_html)
     print(decklist)
-    import pdb; pdb.set_trace()

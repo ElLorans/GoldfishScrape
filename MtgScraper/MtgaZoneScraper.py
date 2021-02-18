@@ -58,7 +58,7 @@ def grab_links(mtgazone_html: str) -> dict:
         links = dict()
         try:
             for deck_info in records[1:]:                   # first is empty
-                deck_name = deck_info[link_index - 2]
+                deck_name = deck_info[link_index - 2].split("{")[0]
                 deck_link = deck_info[link_index]
                 links[deck_name] = deck_link
         except UnboundLocalError:   # Standard has a new UI with 2 tables for BO1 and BO3
@@ -73,7 +73,7 @@ def grab_links(mtgazone_html: str) -> dict:
 
 def get_main_or_side(main_or_side_soup):
     deck = dict()
-    for el in main_or_side_soup.find_all('span', {'class':"wp-streamdecker-tooltip"}):
+    for el in main_or_side_soup.find_all('span', {'class': "wp-streamdecker-tooltip"}):
         copies = int(el.find('div', {'class': "card-qty"}).text)
         name = el.find('div', {'class': "card-name"}).text
         name = name.replace('/', ' // ')
