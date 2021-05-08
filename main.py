@@ -4,6 +4,7 @@ from tqdm.auto import tqdm
 
 from MtgScraper import AetherhubScraper, GoldfishScraper, MtgaZoneScraper
 
+
 if __name__ == "__main__":
     VERBOSE = False
     FULLNESS = True
@@ -11,7 +12,8 @@ if __name__ == "__main__":
     verbose_print = print if VERBOSE else lambda *a, **k: None
 
     print("WATCH OUT: decks with names such as WR and WRBG will not be scraped")
-    formats = ('Standard', 'Modern', 'Pioneer', 'Pauper', 'Legacy', 'Vintage', 'Commander_1v1', 'Commander')
+    # formats = ('Standard', 'Modern', 'Pioneer', 'Pauper', 'Legacy', 'Vintage', 'Commander_1v1', 'Commander')
+    formats = ('Commander_1v1', )
     result = ""
 
     response = requests.get(MtgaZoneScraper.standard_url).text
@@ -50,32 +52,35 @@ if __name__ == "__main__":
                     else:
                         print('\nNO DECK FOUND AT', link, '\n')
 
-        result += f"{formato} = {m} \n{'#' * 80} \n#{formato}_Sideboards \n{formato}_Sideboards = {s} \n "
-        result += f"\n{'#' * 80}\n"
-
-    for formato, links in {'Historic': mtgazone_historic_links,
-                           'Historic_Brawl': mtgazone_historic_brawl_links}.items():
-        print("Switching to", formato, "from MtgaZone")
-        m = dict()
-        s = dict()
-        for name, link in links.items():
-            try:
-                r = requests.get(link).text
-                verbose_print(f"Adding {name} from MtgaZone at:\n{link}")
+        elif formato in {'Historic': mtgazone_historic_links,
+                               'Historic_Brawl': mtgazone_historic_brawl_links}.items():
+            formato_links = {'Historic': mtgazone_historic_links,
+                               'Historic_Brawl': mtgazone_historic_brawl_links}
+            print("Switching to", formato, "from MtgaZone")
+            m = dict()
+            s = dict()
+            for name, link in formato_links[formato].items():
                 try:
-                    real_link = BeautifulSoup(r, 'lxml').find('a', {'class': "_self cvplbd"})['href']
-                    verbose_print(f"Getting data from:\n{real_link}")
-                    r = requests.get(real_link).text
-                except TypeError:  # link was already real link
-                    pass
-                mtga_m, mtga_s = MtgaZoneScraper.get_mtgazone_deck(r)
-                m[name] = mtga_m
-                s[name] = mtga_s
-            except Exception as e:
-                print(e)
-                import pdb;
+                    r = requests.get(link).text
+                    verbose_print(f"Adding {name} from MtgaZone at:\n{link}")
+                    try:
+                        real_link = BeautifulSoup(r, 'lxml').find('a', {'class': "_self cvplbd"})['href']
+                        verbose_print(f"Getting data from:\n{real_link}")
+                        r = requests.get(real_link).text
+                    except TypeError:  # link was already real link
+                        pass
+                    mtga_m, mtga_s = MtgaZoneScraper.get_mtgazone_deck(r)
+                    m[name] = mtga_m
+                    s[name] = mtga_s
+                except Exception as e:
+                    print(e)
+                    import pdb
 
-                pdb.set_trace()
+                    pdb.set_trace()
+
+            result += f"{formato} = {m} \n{'#' * 80} \n#{formato}_Sideboards \n{formato}_Sideboards = {s} \n "
+            result += f"\n{'#' * 80}\n"
+
         result += f"{formato} = {m} \n{'#' * 80} \n#{formato}_Sideboards \n{formato}_Sideboards = {s} \n "
         result += f"\n{'#' * 80}\n"
 
