@@ -12,8 +12,7 @@ if __name__ == "__main__":
     verbose_print = print if VERBOSE else lambda *a, **k: None
 
     print("WATCH OUT: decks with names such as WR and WRBG will not be scraped")
-    # formats = ('Standard', 'Modern', 'Pioneer', 'Pauper', 'Legacy', 'Vintage', 'Commander_1v1', 'Commander')
-    formats = ('Commander_1v1', )
+    formats = ('Standard', 'Modern', 'Pioneer', 'Pauper', 'Legacy', 'Vintage', 'Commander_1v1', 'Commander')
     result = ""
 
     response = requests.get(MtgaZoneScraper.standard_url).text
@@ -53,9 +52,9 @@ if __name__ == "__main__":
                         print('\nNO DECK FOUND AT', link, '\n')
 
         elif formato in {'Historic': mtgazone_historic_links,
-                               'Historic_Brawl': mtgazone_historic_brawl_links}.items():
+                         'Historic_Brawl': mtgazone_historic_brawl_links}.items():
             formato_links = {'Historic': mtgazone_historic_links,
-                               'Historic_Brawl': mtgazone_historic_brawl_links}
+                             'Historic_Brawl': mtgazone_historic_brawl_links}
             print("Switching to", formato, "from MtgaZone")
             m = dict()
             s = dict()
@@ -92,7 +91,7 @@ if __name__ == "__main__":
 
     replacements = {
         # Dream-Den and Lim-Dûl are misspelled on Goldfish
-        "Dream Den": "Dream-Den", "Lim-Dul": "Lim-Dûl",
+        "Dream Den": "Dream-Den", "Lim-Dul": "Lim-Dûl", "Lim-D�l": "Lim-Dûl",
 
         # Change Godzilla names
         "Dorat, the Perfect Pet": "Sprite Dragon", "Mothra, Supersonic Queen": "Luminous Broodmoth",
@@ -104,7 +103,12 @@ if __name__ == "__main__":
         'Godzilla, Primeval Champion': 'Titanoth Rex',
 
         # correct Goldfish mistakes
-        ' <292 C>': '', ' [RNA]': '', ' [mps]': '', '\n\nReport Deck Name': '', ' [GRN]': ''
+        ' <292 C>': '', ' [RNA]': '', ' [mps]': '', '\n\nReport Deck Name': '', ' [GRN]': '',
+
+        # Double Face Cards
+        'mistgate pathway': 'hengegate pathway // mistgate pathway',
+        'grimclimb pathway': 'brightclimb pathway // grimclimb pathway',
+        'agadeem, the undercrypt': "agadeem's awakening // agadeem, the undercrypt"
     }
 
     for k, v in replacements.items():

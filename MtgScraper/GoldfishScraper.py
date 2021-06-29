@@ -1,21 +1,29 @@
 """
 Download all Goldfish decks in a dictionary.
+
+main()
+    grab_links()
+    scrape_deck_page()
+        scrape_cards()
+            deck_text_to_dict()
 """
-from typing import Tuple, Optional
+from typing import Dict, Optional, Tuple
 
 import requests
 from bs4 import BeautifulSoup
 from tqdm.auto import tqdm
 
+from . import MtgBoard, MtgDeck
 
-def deck_text_to_dict(stringa: str) -> dict:
+
+def deck_text_to_dict(stringa: str) -> MtgBoard:
     """
     Convert plain text to dictionary. Text must be separated by \n and number of copies must be separated by ' ' from
     card names.
     :param stringa: '1 Card\n3 OtherCard\n...'
     :return: {'Card': 1, 'OtherCard': 3...}
     """
-    decklist = dict()
+    decklist = MtgBoard()
     for line in stringa.splitlines():
         if len(line.strip()) > 0:
             copies, card = line.split(' ', 1)
@@ -24,7 +32,7 @@ def deck_text_to_dict(stringa: str) -> dict:
     return decklist
 
 
-def grab_links(gf_html: str, clean=True) -> dict:
+def grab_links(gf_html: str, clean=True) -> Dict[str, str]:
     """
     Return ORDERED dict of links to scrape; if param clean is True, decks named only after colours combinations are
         not included.
@@ -76,12 +84,27 @@ def grab_links(gf_html: str, clean=True) -> dict:
             if clean and name not in permutations:  # exclude decks with bad names
                 names_links[name] = "https://www.mtggoldfish.com" + elem.a["href"]
 
-            else:
+            elif not clean:
                 names_links[name] = "https://www.mtggoldfish.com" + elem.a["href"]
     return names_links
 
 
-def scrape_deck_page(html_deck: str) -> (str, dict, dict):
+def scrape_cards(html_soup: BeautifulSoup) -> Tuple[MtgBoard, Optional[MtgBoard]]:
+    """
+    Scrape cards in deck list page.
+    :param html_soup: BeautifulSoup of html deck page OF both mainboard or sideboard
+    :return: tuple of dictionaries of deck cards ({"Mox Opal": 4, ...}, {"Galvanic Blast": 2, ...})
+    """
+    deck_plain_text = html_soup.find('input', {'id': "deck_input_deck"})['value']
+    splitted_deck = deck_plain_text.split('sideboard')
+    main_text = splitted_deck[0]
+    if len(splitted_deck) > 1:
+        side_text = splitted_deck[1]
+        return deck_text_to_dict(main_text), deck_text_to_dict(side_text)
+    return deck_text_to_dict(main_text), None
+
+
+def scrape_deck_page(html_deck: str) -> (str, MtgBoard, MtgBoard):
     """
     Get Tuple with Deck Name, Mainboard dict and Sideboard dict from html of deck page.
 
@@ -107,22 +130,7 @@ def scrape_deck_page(html_deck: str) -> (str, dict, dict):
     return deck_name, main, side
 
 
-def scrape_cards(html_soup: BeautifulSoup) -> Tuple[dict, Optional[dict]]:
-    """
-    Scrape cards in deck list page.
-    :param html_soup: BeautifulSoup of html deck page OF both mainboard or sideboard
-    :return: tuple of dictionaries of deck cards ({"Mox Opal": 4, ...}, {"Galvanic Blast": 2, ...})
-    """
-    deck_plain_text = html_soup.find('input', {'id': "deck_input_deck"})['value']
-    splitted_deck = deck_plain_text.split('sideboard')
-    main_text = splitted_deck[0]
-    if len(splitted_deck) > 1:
-        side_text = splitted_deck[1]
-        return deck_text_to_dict(main_text), deck_text_to_dict(side_text)
-    return deck_text_to_dict(main_text), None
-
-
-def main(formato, full=False):
+def main(formato: str, full=False) -> (Dict[str, int], Dict[str, int]):
     """
     Get dict of mains and dict of sides. 
     :formato: str (e.g.: "standard" or "modern")
@@ -160,19 +168,52 @@ def main(formato, full=False):
                     sideboards[name] = side
             except TimeoutError:
                 print("The connection FAILED due to a TimeOut Error.")
+            except AttributeError as e:
+                print("AttributeError", e, "at", url)
             except Exception as e:
                 print(e, "\n", link, "will not be scraped")
-                import pdb;
+                import pdb
                 pdb.set_trace()
     return mainboards, sideboards
 
 
+class MtgGoldfishScraper:
+    def __init__(self, fullness=False):
+        self.fullness = fullness
+
+    def scrape_formats(self,
+                       formats=(
+                       'Standard', 'Modern', 'Pioneer', 'Pauper', 'Legacy', 'Vintage', 'Commander_1v1', 'Commander')
+                       ):
+        formats_type = type(formats)
+        assert isinstance(formats, str), "formats should be an iterable but not a str"
+        scraped = dict()
+        scraped_sideboards = dict()
+
+        for mtg_format in tqdm(formats):
+            mainboards, sideboards = self.scrape_format(mtg_format.lower())
+            scraped[mtg_format] = mainboards
+            for deck_name, sideboard in sideboards.items():
+                if sideboard is not None:
+                    scraped_sideboards[deck_name] = sideboard
+
+        return scraped, scraped_sideboards
+
+    def scrape_format(self, mtg_format, fullness=None):
+        if fullness is None:
+            fullness = self.fullness
+        return main(mtg_format, fullness)
+
+    def scrape_page(self):
+        pass
+
+
 if __name__ == '__main__':
+    import pdb
+
     example_url = "https://www.mtggoldfish.com/metagame/standard/full#paper"
     response = requests.get(example_url)
     links = grab_links(response.text)
-
-    import pdb;
 
     pdb.set_trace()
     page_html = requests.get(list(links.values())[0]).text
