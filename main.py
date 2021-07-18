@@ -33,18 +33,18 @@ if __name__ == "__main__":
             for name, link in tqdm(mtgazone_standard_links.items()):
                 if name not in m:
                     verbose_print(f"Adding {name} from MtgaZone at:\n{link}")
-                    r = requests.get(link).text
+                    mtgazone_html = requests.get(link).text
 
                     # r might be landing page of deck archetype (with many similar decks) or real deck
                     try:
                         # get first deck from list of decks inside archetype
-                        real_link = BeautifulSoup(r, 'lxml').find('a', {'class': "_self cvplbd"})['href']
+                        real_link = BeautifulSoup(mtgazone_html, 'lxml').find('a', {'class': "_self cvplbd"})['href']
                         print(f"Getting data from:\n{real_link}")
-                        r = requests.get(real_link).text
+                        mtgazone_html = requests.get(real_link).text
                     except TypeError:  # link was already single deck
                         pass
 
-                    mtga_m, mtga_s = MtgaZoneScraper.get_mtgazone_deck(r)
+                    mtga_m, mtga_s = MtgaZoneScraper.get_mtgazone_deck(mtgazone_html)
                     if mtga_m is not None:
                         m[name] = mtga_m
                         s[name] = mtga_s
@@ -60,15 +60,15 @@ if __name__ == "__main__":
             s = dict()
             for name, link in formato_links[formato].items():
                 try:
-                    r = requests.get(link).text
+                    mtgazone_html = requests.get(link).text
                     verbose_print(f"Adding {name} from MtgaZone at:\n{link}")
                     try:
-                        real_link = BeautifulSoup(r, 'lxml').find('a', {'class': "_self cvplbd"})['href']
+                        real_link = BeautifulSoup(mtgazone_html, 'lxml').find('a', {'class': "_self cvplbd"})['href']
                         verbose_print(f"Getting data from:\n{real_link}")
-                        r = requests.get(real_link).text
+                        mtgazone_html = requests.get(real_link).text
                     except TypeError:  # link was already real link
                         pass
-                    mtga_m, mtga_s = MtgaZoneScraper.get_mtgazone_deck(r)
+                    mtga_m, mtga_s = MtgaZoneScraper.get_mtgazone_deck(mtgazone_html)
                     m[name] = mtga_m
                     s[name] = mtga_s
                 except Exception as e:

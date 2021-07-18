@@ -1,4 +1,7 @@
+from typing import Optional, Tuple
+
 from bs4 import BeautifulSoup
+import requests
 
 
 standard_url = 'https://mtgazone.com/metagame/standard'
@@ -6,7 +9,7 @@ historic_url = 'https://mtgazone.com/metagame/historic'
 historic_brawl_url = 'https://mtgazone.com/decks/historic-brawl/'
 
 
-def scrape_november_tiers_table(tabula):
+def scrape_november_tiers_table(tabula: BeautifulSoup) -> dict:
     """
     Scrape Table after November UI change.
     :return:
@@ -71,25 +74,46 @@ def grab_links(mtgazone_html: str) -> dict:
     return links
 
 
-def get_main_or_side(main_or_side_soup):
+def get_main_or_side(main_or_side_soup: BeautifulSoup) -> dict:
     deck = dict()
     for el in main_or_side_soup.find_all('span', {'class': "wp-streamdecker-tooltip"}):
-        copies = int(el.find('div', {'class': "card-qty"}).text)
-        name = el.find('div', {'class': "card-name"}).text
+        copies = int(el.find('div', {'class': "wp-streamdecker-card-qty"}).text)
+        name = el.find('div', {'class': "wp-streamdecker-card-name"}).text
         name = name.replace('/', ' // ')
         deck[name.split('[')[0].split('<')[0].strip()] = copies
     return deck
 
 
-def get_mtgazone_deck(mtgazone_deck_html) -> tuple:
+def get_mtgazone_deck(mtgazone_deck_html: str) -> Tuple[Optional[dict], Optional[dict]]:
     soup = BeautifulSoup(mtgazone_deck_html, 'lxml')
-    main = soup.find('div', {'class': "streamdecker-main-deck"})
-    side = soup.find('div', {'class': "streamdecker-sideboard"})
+    main = soup.find('div', {'class': "wp-streamdecker-main-deck"})
+    side = soup.find('div', {'class': "wp-streamdecker-sideboard"})
     if main is None and side is None:
         return None, None
     if side is None:                                    # for decks without sideboard
         return get_main_or_side(main), {}
     return get_main_or_side(main), get_main_or_side(side)
+
+
+def archetype_link_to_deck_link(mtgazone_html: str, requests_session=None) -> str:
+    """
+    MtgaZone has landing page for archetype with many decks: this function returns the page text of the first deck in
+    the archetype url; if it finds no deck link it returns the input (in case the page is already the correct one).
+    :param mtgazone_html: str for BeautifulSoup
+    :param requests_session: requests.Session()
+    :return:
+    """
+    try:
+        # get first deck from list of decks inside archetype
+        real_link = BeautifulSoup(mtgazone_html, 'lxml').find('a', {'class': "_self cvplbd"})['href']
+        print(f"Getting data from:\n{real_link}")
+        if requests_session is None:
+            mtgazone_html = requests.get(real_link).text
+        else:
+            mtgazone_html = requests_session.get(real_link).text
+        return mtgazone_html
+    except TypeError:  # link was already single deck
+        return mtgazone_html
 
 
 if __name__ == "__main__":
@@ -102,3 +126,9 @@ if __name__ == "__main__":
         mtgazone_links = grab_links(response)
         print(mtgazone_links)
         print('MtgaZoneScraper', formato, ': passed')
+
+    deck_url = list(mtgazone_links.values())[0]
+    deck_page = requests.get(deck_url).text
+    deck_page = archetype_link_to_deck_link(deck_page)
+    mtga_m, mtga_s = get_mtgazone_deck(deck_page)
+    print(mtga_m)
