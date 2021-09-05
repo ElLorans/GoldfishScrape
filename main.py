@@ -1,3 +1,9 @@
+"""
+Scrape from MtgGoldfish: Standard', 'Modern', 'Pioneer', 'Pauper', 'Legacy', 'Vintage', 'Commander_1v1', 'Commander'
+Add missing decks from MtgaZone for: 'Standard'
+Scrape 'Brawl' from AetherHub
+"""
+
 import requests
 from bs4 import BeautifulSoup
 from tqdm.auto import tqdm
@@ -12,7 +18,9 @@ if __name__ == "__main__":
     verbose_print = print if VERBOSE else lambda *a, **k: None
 
     print("WATCH OUT: decks with names such as WR and WRBG will not be scraped")
-    formats = ('Standard', 'Modern', 'Pioneer', 'Pauper', 'Legacy', 'Vintage', 'Commander_1v1', 'Commander')
+    ##formats = (Standard', 'Historic', 'Pioneer', 'Modern', 'Legacy', 'Vintage', 'Pauper', 'Commander', 'Commander_1v1')
+    formats = ('Historic', 'Historic_Brawl')
+    
     result = ""
 
     response = requests.get(MtgaZoneScraper.standard_url).text
@@ -24,6 +32,8 @@ if __name__ == "__main__":
     response = requests.get(MtgaZoneScraper.historic_brawl_url).text
     mtgazone_historic_brawl_links = MtgaZoneScraper.grab_links(response)
 
+    historic_formats_links = {'Historic': mtgazone_historic_links, 'Historic_Brawl': mtgazone_historic_brawl_links}
+    
     for formato in tqdm(formats):
         print("\nSwitching to", formato, "\n")
         m, s = GoldfishScraper.main(formato.lower(), FULLNESS)  # main returns 2 variables
@@ -51,14 +61,11 @@ if __name__ == "__main__":
                     else:
                         print('\nNO DECK FOUND AT', link, '\n')
 
-        elif formato in {'Historic': mtgazone_historic_links,
-                         'Historic_Brawl': mtgazone_historic_brawl_links}.items():
-            formato_links = {'Historic': mtgazone_historic_links,
-                             'Historic_Brawl': mtgazone_historic_brawl_links}
+        elif formato in historic_formats_links:
             print("Switching to", formato, "from MtgaZone")
             m = dict()
             s = dict()
-            for name, link in formato_links[formato].items():
+            for name, link in tqdm(historic_formats_links[formato].items()):
                 try:
                     mtgazone_html = requests.get(link).text
                     verbose_print(f"Adding {name} from MtgaZone at:\n{link}")
@@ -77,8 +84,8 @@ if __name__ == "__main__":
 
                     pdb.set_trace()
 
-            result += f"{formato} = {m} \n{'#' * 80} \n#{formato}_Sideboards \n{formato}_Sideboards = {s} \n "
-            result += f"\n{'#' * 80}\n"
+            # result += f"{formato} = {m} \n{'#' * 80} \n#{formato}_Sideboards \n{formato}_Sideboards = {s} \n "
+            # result += f"\n{'#' * 80}\n"
 
         result += f"{formato} = {m} \n{'#' * 80} \n#{formato}_Sideboards \n{formato}_Sideboards = {s} \n "
         result += f"\n{'#' * 80}\n"
