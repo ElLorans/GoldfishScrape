@@ -42,6 +42,9 @@ def grab_links(gf_html: str, clean=True) -> Dict[str, str]:
                   scraped
     :return: dictionary of deck_names with their links {deck_name: deck_relative_link, ...}
     """
+    if clean:
+        print("WATCH OUT: decks with names such as WR and WRBG will not be scraped")
+
     # split at View More to avoid Budget Decks if program is scraping only partial page
     non_budget = gf_html.split("View More")[0]
     soup = BeautifulSoup(non_budget, "lxml")
@@ -130,7 +133,7 @@ def scrape_deck_page(html_deck: str) -> (str, MtgBoard, MtgBoard):
     return deck_name, main, side
 
 
-def main(formato: str, full=False) -> (Dict[str, int], Dict[str, int]):
+def main(formato: str, full=True) -> (Dict[str, int], Dict[str, int]):
     """
     Get dict of mains and dict of sides. 
     :formato: str (e.g.: "standard" or "modern")
@@ -146,12 +149,11 @@ def main(formato: str, full=False) -> (Dict[str, int], Dict[str, int]):
     url = url_start + formato + url_end
     print(f"Getting links from {url}")
 
-    page = requests.get(url)
-    links = grab_links(page.text)  # .values()
-
-    print(f"{len(links)} links grabbed!!\n")
-
     with requests.Session() as session:
+        page = session.get(url)
+        links = grab_links(page.text)  # .values()
+        print(f"{len(links)} links grabbed!!\n")
+
         for link_name, link in tqdm(links.items()):
             # print(f"Getting data from:\n{link}")
             try:

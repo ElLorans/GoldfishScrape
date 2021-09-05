@@ -33,6 +33,34 @@ class MtgDeck:
             self.sideboard = mainboard
 
 
+def clean_database(stringa: str) -> str:
+    replacements = {
+        # Dream-Den and Lim-Dûl are misspelled on Goldfish
+        "Dream Den": "Dream-Den", "Lim-Dul": "Lim-Dûl", "Lim-D�l": "Lim-Dûl",
+
+        # Change Godzilla names
+        "Dorat, the Perfect Pet": "Sprite Dragon", "Mothra, Supersonic Queen": "Luminous Broodmoth",
+        'Gigan, Cyberclaw Terror': 'Gyruda, Doom of Depths',
+        'Babygodzilla, Ruin Reborn': 'Pollywog Symbiote', 'Anguirus, Armored Killer': 'Gemrazer',
+        'Bio-Quartz Spacegodzilla': 'Brokkos, Apex of Forever',
+        'Godzilla, Doom Inevitable': 'Yidaro, Wandering Monster',
+        'Godzilla, King of the Monsters': 'Zilortha, Strength Incarnate',
+        'Godzilla, Primeval Champion': 'Titanoth Rex',
+
+        # correct Goldfish mistakes
+        ' <292 C>': '', ' [RNA]': '', ' [mps]': '', '\n\nReport Deck Name': '', ' [GRN]': '',
+
+        # Double Face Cards
+        'mistgate pathway': 'hengegate pathway // mistgate pathway',
+        'grimclimb pathway': 'brightclimb pathway // grimclimb pathway',
+        'agadeem, the undercrypt': "agadeem's awakening // agadeem, the undercrypt"
+    }
+
+    for k, v in replacements.items():
+        result = stringa.replace(k, v)
+    return result
+
+
 if __name__ == "__main__":
     a = MtgBoard()
     breakpoint()
