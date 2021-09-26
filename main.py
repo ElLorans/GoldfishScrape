@@ -44,7 +44,6 @@ for handler in (file_handler, stream_handler):
 # Historic and Historic_Brawl are from MtgaZone
 FORMATS = ('Standard', 'Historic', 'Historic Brawl', 'Pioneer', 'Modern', 'Legacy', 'Vintage',
            'Pauper', 'Commander', 'Commander_1v1')
-FORMATS = ('Historic Brawl', )
 
 MTGAZONE_URLS = {"MtgaZone_Standard": MtgaZoneScraper.standard_url,
                  "MtgaZone_Historic": MtgaZoneScraper.historic_url,
@@ -64,7 +63,7 @@ if __name__ == "__main__":
     result = ""
 
     for formato in tqdm(FORMATS):
-        logger.info("\nSwitching to", formato, "\n")
+        print("\nSwitching to", formato, "\n")
         m, s = GoldfishScraper.main(formato.lower())  # main returns 2 variables
         # update with MtgaZone decks
         if formato == 'Standard':
@@ -84,7 +83,6 @@ if __name__ == "__main__":
             m = dict()
             s = dict()
             # for name, link in tqdm(historic_formats_links[formato].items()):
-            breakpoint()
             for name, link in tqdm(HISTORIC_LINKS[formato].items()):
                 mtgazone_html = session.get(link).text
                 logger.debug(f"Adding {name} from MtgaZone at:\n{link}")
