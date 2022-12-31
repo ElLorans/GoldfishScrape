@@ -1,7 +1,8 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Iterable
 
 import requests
 from bs4 import BeautifulSoup
+from tqdm.auto import tqdm
 
 standard_url = 'https://mtgazone.com/metagame/standard'
 historic_url = 'https://mtgazone.com/metagame/historic'
@@ -73,20 +74,18 @@ def grab_links(mtgazone_html: str) -> dict:
     return links
 
 
-def get_main_or_side(main_or_side_soup: BeautifulSoup) -> dict:
+def get_main_or_side(main_or_side_soup: BeautifulSoup) -> dict[str, int]:
     deck = dict()
-    for el in main_or_side_soup.find_all('span', {'class': "wp-streamdecker-tooltip"}):
-        copies = int(el.find('div', {'class': "wp-streamdecker-card-qty"}).text)
-        name = el.find('div', {'class': "wp-streamdecker-card-name"}).text
-        name = name.replace('/', ' // ')
-        deck[name.split('[')[0].split('<')[0].strip()] = copies
+    cards = main_or_side_soup.find_all("div", {"class": "card"})
+    for card in cards:
+        deck[card["data-name"]] = int(card["data-quantity"])
     return deck
 
 
 def get_mtgazone_deck(mtgazone_deck_html: str) -> Tuple[Optional[dict], Optional[dict]]:
     soup = BeautifulSoup(mtgazone_deck_html, 'lxml')
-    main = soup.find('div', {'class': "wp-streamdecker-main-deck"})
-    side = soup.find('div', {'class': "wp-streamdecker-sideboard"})
+    main = soup.find("div", {"class": "decklist main"})
+    side = soup.find("div", {"class": "decklist sideboard"})
     if main is None and side is None:
         return None, None
     if side is None:  # for decks without sideboard
@@ -94,17 +93,18 @@ def get_mtgazone_deck(mtgazone_deck_html: str) -> Tuple[Optional[dict], Optional
     return get_main_or_side(main), get_main_or_side(side)
 
 
-def scrape_mtgazone_deck(link: str, session=None) -> Tuple[Optional[dict], Optional[dict]]:
+def scrape_mtgazone_deck(link: str, session: Optional[requests.Session] = None) -> \
+        Tuple[Optional[dict], Optional[dict]]:
     """
-    MtgaZone has landing page for archetype with many decks: this function returns the page text of the first deck in
-    the archetype url; if it finds no deck link it returns the input (in case the page is already the correct one).
+    MtgaZone has landing page for archetype with many decks: this function returns the mtg deck from the first deck in
+    the archetype url; if it finds no deck link it returns the deck ftom link.
     :param link:
     :param session: requests.Session(), optional to increase speed
     :return:
     """
-    req_session = session if session else requests.Session
+    req_session = session if session else requests.Session()
 
-    with req_session() as session:
+    with req_session as session:
         mtgazone_html = session.get(link).text
         try:
             real_link = BeautifulSoup(mtgazone_html, 'lxml').find('a', {'class': "_self cvplbd"})['href']
@@ -115,14 +115,41 @@ def scrape_mtgazone_deck(link: str, session=None) -> Tuple[Optional[dict], Optio
     return mainboard, sideboard
 
 
+def scrape_formato(format_name: str, session: Optional[requests.Session] = None, limit: Optional[int] = None,
+                   already_scraped: Optional[Iterable] = None) -> (
+        dict[str, int], dict[str, int]):
+    """
+
+    :param already_scraped:
+    :param format_name:
+    :param session:
+    :param limit: Optional[int] to limit number of results (useful in testing)
+    :return:
+    """
+    formato_to_url = {'standard': standard_url, 'historic': historic_url, 'historic_brawl': historic_brawl_url}
+    if format_name not in formato_to_url:
+        print(format_name, "not implemented on MtgaZone")
+        return {}, {}
+    session = requests.Session() if session is None else session
+
+    result = dict()
+    result_sideboard = dict()
+    with session as session:
+        links = grab_links(session.get(formato_to_url[format_name]).text)
+        if limit is not None:
+            links = {k: v for k, v in list(links.items())[:limit]}
+        for deck_name, link in tqdm(links.items()):
+            if already_scraped and deck_name in already_scraped:
+                continue
+            mtga_m, mtga_s = scrape_mtgazone_deck(link, session)
+            result[deck_name] = mtga_m
+            result_sideboard[deck_name] = mtga_s
+    return result, result_sideboard
+
+
 if __name__ == "__main__":
-    formato_to_url = {'Standard': standard_url, 'Historic': historic_url, 'Historic Brawl': historic_brawl_url}
-    for formato, url in formato_to_url.items():
-        response = requests.get(url).text
-        mtgazone_links = grab_links(response)
-        print(mtgazone_links)
-        print('MtgaZoneScraper', formato, ': passed')
+    test_session = requests.session()
+    mains, sides = scrape_formato("Standard",
+                                  session=test_session,
+                                  limit=1)
     breakpoint()
-    deck_url = list(mtgazone_links.values())[0]
-    mtga_m, mtga_s = scrape_mtgazone_deck(deck_url)
-    print(mtga_m)
