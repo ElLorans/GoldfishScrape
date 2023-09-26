@@ -76,11 +76,25 @@ def clean_database(stringa: str) -> str:
 
         # correct Goldfish mistakes
         ' <292 C>': '', ' [RNA]': '', ' [mps]': '', '\n\nReport Deck Name': '', ' [GRN]': '',
-
+        "A - Oran - Rief Ooze": "Oran-Rief Ooze",
+        "a-Dragon's Rage Channeler": "Dragon's rage channeler",
+        "Sakurtribe Elder": "sakura-tribe elder",
+        "Gloin, Dwarf Emissary": "Glóin, Dwarf Emissary",
+        "Smeagol, helpful guide": "Sméagol, helpful guide",
+        "Palantir of Orthanc": "Palantír of Orthanc",
+        "Lord of the Nazgul": "Lord of the Nazgûl",
+        "Troll of Khazad-dum": "Troll of Khazad-dûm",
+        "Lorien Revealed": "Lórien Revealed",
+        "Anduril, Flame of the West": "Andúril, Flame of the West",
+        "Mauhur": "Mauhúr",
+        "Barad-dur": "Barad-dûr",
         # Double Face Cards
-        'mistgate pathway': 'hengegate pathway // mistgate pathway',
-        'grimclimb pathway': 'brightclimb pathway // grimclimb pathway',
-        'agadeem, the undercrypt': "agadeem's awakening // agadeem, the undercrypt"
+        'Mistgate Pathway': 'Hengegate Pathway // Mistgate Pathway',
+        'Grimclimb Pathway': 'Brightclimb Pathway // Grimclimb Pathway',
+        'Agadeem, the Undercrypt': "Agadeem's Awakening // Agadeem, the Undercrypt",
+        'Pick-Beeble': 'Pick-a-Beeble',
+        'Lagonnband Trailblazer': 'Lagonna-Band Trailblazer',
+        'Sedasher Octopus': 'Sea-Dasher Octopus',
     }
 
     for k, v in replacements.items():
