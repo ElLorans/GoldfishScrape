@@ -1,4 +1,5 @@
 """Scrape each format_source key from the sources specified in the Iterable value.
+The order in the Iterable gives priority: Decks with the same name will not be scraped from the second source.
 """
 from __future__ import annotations
 from typing import Iterable
