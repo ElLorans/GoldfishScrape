@@ -1,10 +1,6 @@
-The project needs a major restructuring.
-Objective: provide a common, stable API to scrape he most famous MTG websites for deck lists.
-First Milestone: refactor code.
-Second Milestone: Define a simple API to establish which formats to scrape and priorities (e.g.: if same deck is found on Goldfish and AetherHub, which one is to be scraped?)
-Third Milestone: use async to speed up scraping (without scraping 2 urls from the same website, but e.g. scraping at the same time from both Goldfish and AetherHub)
+The project needs a refactor to use async to speed up scraping
+(without scraping 2 urls from the same website, but e.g. scraping at the same time from both Goldfish and AetherHub)
 
-Second Step: use async to speed up scraping. Since
 # GoldfishScrape
 Execute 'main.py' to download MtgGoldfish, AetherHub and MtgaZone Decklists as python dictionaries.
 All formats in 
