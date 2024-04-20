@@ -1,19 +1,21 @@
-"""Scrape from MtgGoldfish: Standard', 'Modern', 'Pioneer', 'Pauper', 'Legacy', 'Vintage', 'Commander_1v1','
-Commander'
-Scrape missing decks for ('Standard', 'Historic') from MtgaZone
-Scrape 'Historic Brawl' from MtgaZone
-Scrape 'Brawl' from AetherHub
+"""Scrape each format_source key from the sources specified in the Iterable value.
+The order in the Iterable gives priority: Decks with the same name will not be scraped from the second source.
 """
-formats_source: dict[str, tuple] = {
+from __future__ import annotations
+from typing import Iterable
+
+
+formats_source: dict[str, Iterable[str]] = {
     'Standard': ('MtgGoldfish', 'MtgaZone',),
     'Alchemy': ('MtgGoldfish',),
+    'Timeless': ('MtgGoldfish',),
     'Historic': ('MtgaZone',),
     'Brawl': ('Aetherhub', ),
     'Historic Brawl': ('Aetherhub', ),
     'Pioneer': ('MtgGoldfish',),
     'Modern': ('MtgGoldfish',),
     'Legacy': ('MtgGoldfish',),
-    'Vintage': ('MtgGoldfish',),
+    # 'Vintage': ('MtgGoldfish',),
     'Pauper': ('MtgGoldfish',),
     'Historic_Brawl': ('MtgaZone', ),
     'Commander': ('MtgGoldfish',),

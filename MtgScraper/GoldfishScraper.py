@@ -7,6 +7,7 @@ main()
         scrape_cards()
             deck_text_to_dict()
 """
+import logging
 from typing import Dict, Iterable, Optional, Tuple, Union
 
 import requests
@@ -27,12 +28,11 @@ def grab_links(gf_html: str, clean: bool = True) -> Dict[str, str]:
     :return: dictionary of deck_names with their links {deck_name: deck_relative_link, ...}
     """
     if clean:
-        print("WATCH OUT: decks with names such as WR and WRBG will not be scraped")
+        logging.info("WATCH OUT: decks with names such as WR and WRBG will not be scraped")
 
     # split at View More to avoid Budget Decks if program is scraping only partial page
     non_budget = gf_html.split("View More")[0]
     soup = BeautifulSoup(non_budget, "lxml")
-
     names = soup.find_all('span', {'class': 'deck-price-paper'})[1:]
     names_links: Dict[str, str] = dict()
 
@@ -101,8 +101,7 @@ def scrape_formato(formato: str,
                    full: bool = True,
                    session: Optional[requests.Session] = None,
                    limit: Optional[int] = None,
-                   already_scraped: Optional[Iterable] = None) -> (
-        Dict[str, int], Dict[str, int]):
+                   already_scraped: Optional[Iterable] = None) -> (Dict[str, int], Dict[str, int]):
     """
     Get dict of mains and dict of sides. 
     :formato: str (e.g.: "standard" or "modern")
@@ -112,8 +111,8 @@ def scrape_formato(formato: str,
     :already_scraped:
     :return:
     """
-    mainboards = dict()
-    sideboards = dict()
+    mainboards: Dict[str, int] = dict()
+    sideboards: Dict[str, int] = dict()
 
     url = build_url(formato, full)
     print(f"Getting links from {url}")
@@ -183,13 +182,10 @@ class MtgGoldfishScraper:
 
 
 if __name__ == '__main__':
-    import pdb
-
     example_url = "https://www.mtggoldfish.com/metagame/standard/full#paper"
     response = requests.get(example_url)
     deck_links = grab_links(response.text)
-
-    pdb.set_trace()
+    breakpoint()
     page_html = requests.get(list(deck_links.values())[0]).text
     decklist = scrape_deck_page(page_html)
     print(decklist)
