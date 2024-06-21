@@ -1,4 +1,5 @@
 # Scrape brawl from Aetherhub
+from io import StringIO
 from typing import Optional, Iterable
 
 import pandas as pd
@@ -41,7 +42,7 @@ def scrape_formato(format_name: str, session: Optional[requests.Session] = None,
             if already_scraped and name in already_scraped:
                 continue
             r = connection.get(link).text
-            dfs = pd.read_html(r)  # pd.read_html captures commander as well, bs4 struggles to do so
+            dfs = pd.read_html(StringIO(r))  # pd.read_html captures commander as well, bs4 struggles to do so
             # dfs[0] first col is commander
             # dfs[1] first col is decklist
             deck_list = dfs[0][0].to_list() + dfs[1].iloc[:, 0].to_list()
