@@ -4,9 +4,13 @@ import requests
 from bs4 import BeautifulSoup
 from tqdm.auto import tqdm
 
-standard_url = 'https://mtgazone.com/metagame/standard'
-historic_url = 'https://mtgazone.com/metagame/historic'
+standard_url = 'https://mtgazone.com/standard-bo3-metagame-tier-list/'
+historic_url = 'https://mtgazone.com/historic-bo3-metagame-tier-list/'
 historic_brawl_url = 'https://mtgazone.com/decks/historic-brawl/'
+timeless_url = 'https://mtgazone.com/timeless-bo3-metagame-tier-list/'
+
+FORMATS_TO_URL: dict[str, str] = {'standard': standard_url, 'historic': historic_url,
+                                  'historic_brawl': historic_brawl_url, 'timeless': timeless_url}
 
 
 def grab_november_tiers_table(tabula: BeautifulSoup) -> dict:
@@ -97,7 +101,7 @@ def scrape_mtgazone_deck(link: str, session: Optional[requests.Session] = None) 
         Tuple[Optional[dict], Optional[dict]]:
     """
     MtgaZone has landing page for archetype with many decks: this function returns the mtg deck from the first deck in
-    the archetype url; if it finds no deck link it returns the deck ftom link.
+    the archetype url; if it finds no deck link it returns the deck from link.
     :param link:
     :param session: requests.Session(), optional to increase speed
     :return:
@@ -126,8 +130,8 @@ def scrape_formato(format_name: str, session: Optional[requests.Session] = None,
     :param limit: Optional[int] to limit number of results (useful in testing)
     :return:
     """
-    formato_to_url = {'standard': standard_url, 'historic': historic_url, 'historic_brawl': historic_brawl_url}
-    if format_name not in formato_to_url:
+
+    if format_name not in FORMATS_TO_URL:
         print(format_name, "not implemented on MtgaZone")
         return {}, {}
     session = requests.Session() if session is None else session
@@ -135,21 +139,22 @@ def scrape_formato(format_name: str, session: Optional[requests.Session] = None,
     result = dict()
     result_sideboard = dict()
     with session as session:
-        links = grab_links(session.get(formato_to_url[format_name]).text)
+        links = grab_links(session.get(FORMATS_TO_URL[format_name]).text)
         if limit is not None:
             links = {k: v for k, v in list(links.items())[:limit]}
         for deck_name, link in tqdm(links.items()):
             if already_scraped and deck_name in already_scraped:
                 continue
-            mtga_m, mtga_s = scrape_mtgazone_deck(link, session)
-            result[deck_name] = mtga_m
-            result_sideboard[deck_name] = mtga_s
+            try:
+                result[deck_name], result_sideboard[deck_name] = scrape_mtgazone_deck(link, session)
+            except requests.exceptions.RequestException as err:  # MtgaZone's links can be wrong and point to nothing
+                print(err)
     return result, result_sideboard
 
 
 if __name__ == "__main__":
     test_session = requests.session()
-    mains, sides = scrape_formato("Standard",
+    mains, sides = scrape_formato("standard",
                                   session=test_session,
                                   limit=1)
     breakpoint()

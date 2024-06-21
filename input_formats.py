@@ -8,7 +8,7 @@ from typing import Iterable
 formats_source: dict[str, Iterable[str]] = {
     'Standard': ('MtgGoldfish', 'MtgaZone',),
     'Alchemy': ('MtgGoldfish',),
-    'Timeless': ('MtgGoldfish',),
+    'Timeless': ('MtgaZone',),
     'Historic': ('MtgaZone',),
     'Brawl': ('Aetherhub', ),
     'Historic Brawl': ('Aetherhub', ),
