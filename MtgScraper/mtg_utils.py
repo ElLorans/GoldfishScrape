@@ -78,7 +78,19 @@ def clean_database(stringa: str) -> str:
         ' <292 C>': '', ' [RNA]': '', ' [mps]': '', '\n\nReport Deck Name': '', ' [GRN]': '',
         "A - Oran - Rief Ooze": "Oran-Rief Ooze",
         "a-Dragon's Rage Channeler": "Dragon's rage channeler",
-        "Sakurtribe Elder": "sakura-tribe elder",
+        "Sakurtribe Elder": "Sakura-Tribe Elder",
+
+        # Double Face Cards
+        'Mistgate Pathway': 'Hengegate Pathway // Mistgate Pathway',
+        'Grimclimb Pathway': 'Brightclimb Pathway // Grimclimb Pathway',
+        'Agadeem, the Undercrypt': "Agadeem's Awakening // Agadeem, the Undercrypt",
+        'Pick-Beeble': 'Pick-a-Beeble',
+        'Lagonnband Trailblazer': 'Lagonna-Band Trailblazer',
+        'Sedasher Octopus': 'Sea-Dasher Octopus',
+
+        '///': '//',
+
+        # LOTR accents
         "Gloin, Dwarf Emissary": "Glóin, Dwarf Emissary",
         "Smeagol, helpful guide": "Sméagol, helpful guide",
         "Palantir of Orthanc": "Palantír of Orthanc",
@@ -88,13 +100,14 @@ def clean_database(stringa: str) -> str:
         "Anduril, Flame of the West": "Andúril, Flame of the West",
         "Mauhur": "Mauhúr",
         "Barad-dur": "Barad-dûr",
-        # Double Face Cards
-        'Mistgate Pathway': 'Hengegate Pathway // Mistgate Pathway',
-        'Grimclimb Pathway': 'Brightclimb Pathway // Grimclimb Pathway',
-        'Agadeem, the Undercrypt': "Agadeem's Awakening // Agadeem, the Undercrypt",
-        'Pick-Beeble': 'Pick-a-Beeble',
-        'Lagonnband Trailblazer': 'Lagonna-Band Trailblazer',
-        'Sedasher Octopus': 'Sea-Dasher Octopus',
+        'Eomer, King of Rohan': 'Éomer, King of Rohan',
+        'Eowyn, Shieldmaiden': 'Éowyn, Shieldmaiden',
+        'Theoden, King of Rohan': 'Théoden, King of Rohan',
+        'Gilraen, Dunedain Protector': 'Gilraen, Dúnedain Protector',
+        'Haldir, Lorien Lieutenant': 'Haldir, Lórien Lieutenant',
+        'Lothlorien Lookout': 'Lothlórien Lookout',
+        'Soothing of Smeagol': 'Soothing of Sméagol',
+
     }
 
     for k, v in replacements.items():
