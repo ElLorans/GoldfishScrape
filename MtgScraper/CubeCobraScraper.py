@@ -8,36 +8,42 @@ from tqdm.auto import tqdm
 
 
 class CubeCobraScraper:
-    def __init__(self, session=None):
+    def __init__(self, session=None, url=None):
         if session is None:
             self.session = requests.Session()
         else:
             self.session = session
-        result = dict()
-        with self.session as connection:
+        if url:
+            self.cubes = self.get_cube_dict(url=url)
+        else:
             self.cubes = self.get_cube_dict()
-            for name, cube_cobra_id in tqdm(self.cubes.items()):
-                result[name] = self.fetch_cube_list(self, cube_cobra_id)
-        with open("cubecobra.py", "w") as f:
+
+    def to_file(self, filepath: str = "../cubecobra.py"):
+        result = dict()
+        for name, cube_cobra_id in tqdm(self.cubes.items()):
+            result[name] = self.fetch_cube_list(self, cube_cobra_id)
+        with open(filepath, "w") as f:
             f.write("Cube = " + str(result))
 
-    def get_cube_dict(self) -> dict[str, str]:
-        # query "" and order by popularity
-        url = "https://cubecobra.com/search/%22%22/0?order=pop"
-
+    def get_cube_dict(self, url: str = "https://cubecobra.com/explore") -> dict[str, str]:
+        """
+        Return {cube_name: cube_list, ...}. If url not provided, gets most popular cubes.
+        """
         response = self.session.get(url)
         text = response.text
         soup = BeautifulSoup(text, 'lxml')
-        # Find the script tag that contains the dictionary
-        script = soup.find('script', type='text/javascript', text=lambda t: t.startswith('window.reactProps'))
+        # Find the script tag that contains the dictionary and get the text
+        script_content = soup.find('script', string=lambda t: t and 'window.reactProps' in t).string
+        # remove var name and trailing ;
+        json_str = script_content.split('window.reactProps =', 1)[1].rsplit(';', 1)[0].strip()
 
-        # Extract the dictionary from the script tag
-        start = script.text.index('[{')
-        end = script.text.index('}]') + 2
-        cubes_data = script.text[start:end]
-        cubes_list: list[dict[str, str]] = json.loads(script.text[start:end])
+        cubes_list: dict = json.loads(json_str)
+        if "popular" in cubes_list:
+            cubes_list = cubes_list["popular"]
+        else:
+            cubes_list = cubes_list["cubes"]
         # Access the data in the dictionary
-        return {CubeCobraScraper.build_name(el): el['_id'] for el in cubes_list}
+        return {CubeCobraScraper.build_name(el): el['id'] for el in cubes_list}
 
     @staticmethod
     def fetch_cube_list(self, cube_id, session=None) -> dict[str, int]:
@@ -53,6 +59,9 @@ class CubeCobraScraper:
 
     @staticmethod
     def build_name(cube_dictionary: dict) -> str:
+        """
+        Hydrate Cube Name with Cube's Category to make cube name clear.
+        """
         name: str = cube_dictionary['name']
         name_sources: tuple[str, ...] = ('categoryPrefixes', 'categoryOverride')
 
@@ -73,4 +82,5 @@ class CubeCobraScraper:
 
 
 if __name__ == "__main__":
-    scraper = CubeCobraScraper()
+    scraper = CubeCobraScraper(url="https://cubecobra.com/explore")
+    scraper.to_file()
