@@ -46,11 +46,14 @@ if __name__ == "__main__":
         mains = dict()
         sides = dict()
         for source in sources:
-            # scrape_formato returns 2 variables
-            m, s = str_to_scraper[source].scrape_formato(formato.lower(),
+            try:
+                m, s = str_to_scraper[source].scrape_formato(formato.lower(),
                                                          session=SESSION,
                                                          already_scraped=mains.keys(),
                                                          )
+            except Exception as e:
+                logger.error(f"Error in {source} for {formato}: {e}")
+                breakpoint()
             mains.update(m)
             sides.update(s)
         result += f"{clean_formato} = {mains} \n{'#' * 80} \n#{clean_formato}_Sideboards \n{clean_formato}_Sideboards = {sides} \n "
