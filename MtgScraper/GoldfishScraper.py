@@ -94,7 +94,18 @@ def scrape_deck_page(html_deck: str, deck_name: Optional[str] = None) -> (str, M
 def build_url(formato: str, full: bool = True):
     url_start = "https://www.mtggoldfish.com/metagame/"
     url_end = "/full#paper" if full is True else "/#paper"
-    return url_start + formato + url_end
+    # weird bug on Pauper requiring lower case. Browsers not affected, but requests is.
+    return url_start + formato.lower() + url_end
+
+
+def fetch_links(formato: str, session: requests.Session, full: bool = True) -> dict[str, str]:
+    url = build_url(formato, full)
+    print(f"Getting links from {url}")
+    page = session.get(url)
+    links = grab_links(page.text)
+    num_links = len(links)
+    print(f"{num_links} links grabbed!!\n")
+    return links
 
 
 def scrape_formato(formato: str,
@@ -114,15 +125,12 @@ def scrape_formato(formato: str,
     mainboards: Dict[str, int] = dict()
     sideboards: Dict[str, int] = dict()
 
-    url = build_url(formato, full)
-    print(f"Getting links from {url}")
-
     if session is None:
         session = requests.Session()
     with session as connection:
-        page = connection.get(url)
-        links = grab_links(page.text)
-        print(f"{len(links)} links grabbed!!\n")
+        links = fetch_links(formato, connection, full)
+        if len(links) == 0 and full:
+            links = fetch_links(formato, connection, False)
         if limit is not None:
             links = {k: v for k, v in list(links.items())[:limit]}
         for link_name, link in tqdm(links.items()):
@@ -182,7 +190,7 @@ class MtgGoldfishScraper:
 
 
 if __name__ == '__main__':
-    example_url = "https://www.mtggoldfish.com/metagame/standard/full#paper"
+    example_url = "https://www.mtggoldfish.com/metagame/commander/full#paper"
     response = requests.get(example_url)
     deck_links = grab_links(response.text)
     breakpoint()
