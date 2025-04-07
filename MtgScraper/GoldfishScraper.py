@@ -41,7 +41,7 @@ def grab_links(gf_html: str, clean: bool = True) -> Dict[str, str]:
 
         if name not in names_links and name != 'Other':
             # if deck name already present do NOT insert it in result dict
-            if clean and name not in unclear_deck_names:  # exclude decks with bad names
+            if clean and name not in UNCLEAR_DECK_NAMES:  # exclude decks with bad names
                 names_links[name] = "https://www.mtggoldfish.com" + elem.a["href"]
 
             elif not clean:
@@ -60,8 +60,8 @@ def scrape_cards(html_soup: BeautifulSoup) -> Tuple[MtgBoard, Optional[MtgBoard]
     main_text = splitted_deck[0]
     if len(splitted_deck) > 1:
         side_text = splitted_deck[1]
-        return deck_text_to_dict(main_text), deck_text_to_dict(side_text)
-    return deck_text_to_dict(main_text), None
+        return MtgBoard.from_text(main_text), MtgBoard.from_text(side_text)
+    return MtgBoard.from_text(main_text), None
 
 
 def scrape_deck_page(html_deck: str, deck_name: Optional[str] = None) -> (str, MtgBoard, MtgBoard):
