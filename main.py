@@ -1,10 +1,3 @@
-"""
-Scrape from MtgGoldfish: Standard', 'Modern', 'Pioneer', 'Pauper', 'Legacy', 'Vintage', 'Commander_1v1', 'Commander'
-Scrape missing decks for ('Standard', 'Historic') from MtgaZone
-Scrape 'Historic Brawl' from MtgaZone
-Scrape 'Brawl' from AetherHub
-"""
-
 from __future__ import annotations
 
 import logging
@@ -12,8 +5,7 @@ import logging
 import requests
 from tqdm.auto import tqdm
 
-from MtgScraper import AetherhubScraper, GoldfishScraper, MtgaZoneScraper
-from MtgScraper.mtg_utils import clean_database
+from MtgScraper import AetherhubScraper, MtgGoldfishScraper, MtgaZoneScraper, MtgScraper, MtgBoard, clean_database
 from input_formats import formats_source
 
 # set logging /
@@ -31,11 +23,8 @@ for handler in (file_handler, stream_handler):
 # / set logging
 
 
-str_to_scraper: dict[str, GoldfishScraper | AetherhubScraper | MtgaZoneScraper] = {
-    'MtgGoldfish': GoldfishScraper,
-    'MtgaZone': MtgaZoneScraper,
-    'Aetherhub': AetherhubScraper
-}
+str_to_scraper: dict[str, type[MtgGoldfishScraper] | type[AetherhubScraper] | type[MtgaZoneScraper]] = {
+    'MtgGoldfish': MtgGoldfishScraper, 'MtgaZone': MtgaZoneScraper, 'Aetherhub': AetherhubScraper}
 
 if __name__ == "__main__":
     SESSION = requests.Session()
@@ -43,19 +32,20 @@ if __name__ == "__main__":
     for formato, sources in tqdm(formats_source.items()):
         clean_formato = formato.replace(" ", "_")
         logging.info(f"\nSwitching to {formato}\n")
-        mains = dict()
-        sides = dict()
+        mains: dict[str, MtgBoard] = dict()
+        sides: dict[str, MtgBoard] = dict()
         for source in sources:
             try:
-                m, s = str_to_scraper[source].scrape_formato(formato.lower(),
-                                                         session=SESSION,
-                                                         already_scraped=mains.keys(),
-                                                         )
+                scraper: MtgScraper = str_to_scraper[source](SESSION, clean=True, fullness=False)
+                decks = scraper.scrape_format(formato.lower())
             except Exception as e:
                 logger.error(f"Error in {source} for {formato}: {e}")
-                breakpoint()
-            mains.update(m)
-            sides.update(s)
+                decks = {}
+            for deck_name, deck in decks.items():
+                if deck_name not in mains:
+                    mains[deck_name] = deck.mainboard
+                    if deck.sideboard:
+                        sides[deck_name] = deck.sideboard
         result += f"{clean_formato} = {mains} \n{'#' * 80} \n#{clean_formato}_Sideboards \n{clean_formato}_Sideboards = {sides} \n "
         result += f"\n{'#' * 80}\n"
     result = clean_database(result)  # correct misspelled cards

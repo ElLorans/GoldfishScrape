@@ -6,7 +6,6 @@ func clean_database
 import itertools
 from typing import Final
 
-
 MTG_COLORS: Final[list[str]] = ['W', 'R', 'U', 'G', 'B']
 
 # names not to be considered (e.g.: W, WR, GB, GBRU)
@@ -35,6 +34,11 @@ class MtgBoard(dict[str, int]):
                 deck_list[card] = deck_list.get(card, 0) + int(copies)
         return deck_list
 
+    def count(self) -> int:
+        result = 0
+        for k, v in self.items():
+            result += v
+        return result
 
 class MtgDeck:
     """
@@ -48,6 +52,19 @@ class MtgDeck:
     def __repr__(self):
         return f"Mainboard: {self.mainboard}\nSideboard: {self.sideboard}"
 
+    def __iter__(self):
+        # Allow unpacking into two variables
+        return iter((self.mainboard, self.sideboard))
+
+    def __setitem__(self, key, value):
+        if key == 0:
+            self.mainboard = value
+        elif key == 1:
+            self.sideboard = value
+        else:
+            raise TypeError("Key should be 0 or 1, not", key)
+
+
 
 def clean_database(stringa: str) -> str:
     replacements = {  # Dream-Den and Lim-Dûl are misspelled on Goldfish
@@ -60,10 +77,13 @@ def clean_database(stringa: str) -> str:
         'Godzilla, Doom Inevitable': 'Yidaro, Wandering Monster',
         'Godzilla, King of the Monsters': 'Zilortha, Strength Incarnate', 'Godzilla, Primeval Champion': 'Titanoth Rex',
 
-        # correct Goldfish mistakes
+        # correct Goldfish mistakes and Alchemy cards since they are not supported
         ' <292 C>': '', ' [RNA]': '', ' [mps]': '', '\n\nReport Deck Name': '', ' [GRN]': '',
         "A - Oran - Rief Ooze": "Oran-Rief Ooze", "a-Dragon's Rage Channeler": "Dragon's rage channeler",
         "Sakurtribe Elder": "Sakura-Tribe Elder",
+        "a-The One Ring": "The One Ring",
+        "a-Mentor's Guidance": "Mentor's Guidance",
+        "Clavileno, First of the Blessed": "Clavileño, First of the Blessed",
 
         # Double Face Cards
         'Mistgate Pathway': 'Hengegate Pathway // Mistgate Pathway',
