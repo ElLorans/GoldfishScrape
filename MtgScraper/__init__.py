@@ -1,5 +1,3 @@
-from typing import Literal
-
 from MtgScraper.Aetherhub import AetherhubScraper
 from MtgScraper.MtgGoldfish import MtgGoldfishScraper
 from MtgScraper.MtgaZone import MtgaZoneScraper

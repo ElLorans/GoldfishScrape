@@ -20,7 +20,7 @@ class CubeCobraScraper:
 
     def to_file(self, filepath: str = "../cubecobra.py"):
         result = dict()
-        for name, cube_cobra_id in tqdm(self.cubes.items()):
+        for name, cube_cobra_id in tqdm(self.cubes.items(), position=0, leave=True):
             result[name] = self.fetch_cube_list(self, cube_cobra_id)
         with open(filepath, "w") as f:
             f.write("Cube = " + str(result))
@@ -45,7 +45,6 @@ class CubeCobraScraper:
         # Access the data in the dictionary
         return {CubeCobraScraper.build_name(el): el['id'] for el in cubes_list}
 
-    @staticmethod
     def fetch_cube_list(self, cube_id, session=None) -> dict[str, int]:
         if session is None:
             session = self.session
